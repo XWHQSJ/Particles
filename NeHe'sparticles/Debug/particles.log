@@ -1,4 +1,0 @@
-﻿  particles.cpp
-d:\workspace\opengl\particles\particles\particles.cpp(402): warning C4838: 从“int”转换到“BYTE”需要收缩转换
-  particles.vcxproj -> D:\workspace\openGL\particles\Debug\particles.exe
-  particles.vcxproj -> D:\workspace\openGL\particles\Debug\particles.pdb (Partial PDB)
