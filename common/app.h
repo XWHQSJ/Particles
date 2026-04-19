@@ -4,7 +4,9 @@
 #include <vector>
 #include <functional>
 
-#ifdef __APPLE__
+#ifdef __EMSCRIPTEN__
+#include <GLES3/gl3.h>
+#elif defined(__APPLE__)
 #ifndef GL_SILENCE_DEPRECATION
 #define GL_SILENCE_DEPRECATION
 #endif
@@ -47,9 +49,13 @@ public:
 
     GLuint load_texture_from_file(const char* path);
 
+    // Called once per frame; public for emscripten_set_main_loop_arg
+    void tick();
+
 private:
     struct GLFWwindow* window_ = nullptr;
     AppConfig config_;
+    double last_time_ = 0.0;
 
     InitCallback init_cb_;
     UpdateCallback update_cb_;

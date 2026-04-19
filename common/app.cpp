@@ -1,6 +1,9 @@
 #include "app.h"
 
-#ifdef __APPLE__
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <GLES3/gl3.h>
+#elif defined(__APPLE__)
 #include <OpenGL/glu.h>
 #else
 #include <GL/glu.h>
@@ -10,6 +13,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <cmath>
 
 // We include texture.h only in app.cpp so stb_image is compiled once
 #include "texture.h"
@@ -35,6 +39,18 @@ App::~App() {
     g_app = nullptr;
 }
 
+// Build a simple perspective matrix (used when gluPerspective is unavailable)
+static void build_perspective(float* m, float fov_deg, float aspect,
+                              float near_p, float far_p) {
+    memset(m, 0, 16 * sizeof(float));
+    float f = 1.0f / tanf(fov_deg * 3.14159265f / 360.0f);
+    m[0] = f / aspect;
+    m[5] = f;
+    m[10] = (far_p + near_p) / (near_p - far_p);
+    m[11] = -1.0f;
+    m[14] = (2.0f * far_p * near_p) / (near_p - far_p);
+}
+
 bool App::init(const AppConfig& cfg) {
     config_ = cfg;
     g_app = this;
@@ -44,10 +60,17 @@ bool App::init(const AppConfig& cfg) {
         return false;
     }
 
+#ifdef __EMSCRIPTEN__
+    // WebGL 2 (maps to OpenGL ES 3.0)
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+#else
     // Request OpenGL 2.1 compatibility for legacy immediate mode
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_SAMPLES, 4);
+#endif
 
     window_ = glfwCreateWindow(cfg.width, cfg.height,
                                cfg.title.c_str(), nullptr, nullptr);
@@ -62,14 +85,16 @@ bool App::init(const AppConfig& cfg) {
     glfwSetKeyCallback(window_, key_callback_static);
 
     // GL setup
+#ifndef __EMSCRIPTEN__
     glShadeModel(GL_SMOOTH);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearDepth(1.0f);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    glEnable(GL_TEXTURE_2D);
+#endif
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    glEnable(GL_TEXTURE_2D);
 
     return true;
 }
@@ -78,43 +103,85 @@ GLuint App::load_texture_from_file(const char* path) {
     return load_texture(path);
 }
 
+// Single-frame tick for both Emscripten and desktop run()
+void App::tick() {
+    double now = glfwGetTime();
+    float dt = static_cast<float>(now - last_time_);
+    last_time_ = now;
+    if (dt > 0.1f) dt = 0.1f;
+
+    int w, h;
+    glfwGetFramebufferSize(window_, &w, &h);
+    if (h == 0) h = 1;
+    glViewport(0, 0, w, h);
+
+#ifndef __EMSCRIPTEN__
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45.0, static_cast<double>(w) / h, 0.1, 200.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+#endif
+
+    if (update_cb_) update_cb_(dt);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#ifndef __EMSCRIPTEN__
+    glLoadIdentity();
+#endif
+
+    if (render_cb_) render_cb_(config_.zoom);
+
+    glfwSwapBuffers(window_);
+    glfwPollEvents();
+}
+
+#ifdef __EMSCRIPTEN__
+static void emscripten_main_loop(void* arg) {
+    auto* app = static_cast<App*>(arg);
+    app->tick();
+}
+#endif
+
 void App::run() {
     if (init_cb_) init_cb_();
 
-    double last_time = glfwGetTime();
+    last_time_ = glfwGetTime();
 
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop_arg(emscripten_main_loop, this, 0, 1);
+#else
     while (!glfwWindowShouldClose(window_)) {
-        double now = glfwGetTime();
-        float dt = static_cast<float>(now - last_time);
-        last_time = now;
-        // clamp dt to avoid spiral of death
-        if (dt > 0.1f) dt = 0.1f;
-
-        // Handle resize
-        int w, h;
-        glfwGetFramebufferSize(window_, &w, &h);
-        if (h == 0) h = 1;
-        glViewport(0, 0, w, h);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        gluPerspective(45.0, static_cast<double>(w) / h, 0.1, 200.0);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-
-        if (update_cb_) update_cb_(dt);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glLoadIdentity();
-
-        if (render_cb_) render_cb_(config_.zoom);
-
-        glfwSwapBuffers(window_);
-        glfwPollEvents();
+        tick();
     }
+#endif
 }
 
 // ---- Legacy renderer (immediate mode) ----
+// Not available under Emscripten — demos should use the modern renderer
+// for WASM builds. This stub prevents link errors.
 
+#ifdef __EMSCRIPTEN__
+#include "renderer_modern.h"
+
+static ModernRenderer g_web_renderer;
+static bool g_web_renderer_inited = false;
+
+void render_particles_legacy(const ParticleSystem& sys,
+                             GLuint texture_id, float zoom) {
+    // On WebGL, transparently delegate to the modern renderer
+    if (!g_web_renderer_inited) {
+        g_web_renderer.init(nullptr, nullptr);
+        g_web_renderer_inited = true;
+    }
+    if (g_web_renderer.is_ready()) {
+        // Use a default viewport size; the real viewport is set in tick()
+        int vp[4];
+        glGetIntegerv(GL_VIEWPORT, vp);
+        g_web_renderer.render(sys, texture_id, zoom, vp[2], vp[3]);
+    }
+}
+#else
 void render_particles_legacy(const ParticleSystem& sys,
                              GLuint texture_id, float zoom) {
     glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -134,6 +201,7 @@ void render_particles_legacy(const ParticleSystem& sys,
         glEnd();
     }
 }
+#endif
 
 // ---- CLI parsing ----
 
