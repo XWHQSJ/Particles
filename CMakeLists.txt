@@ -31,8 +31,8 @@ else()
     set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(glfw)
 
-    # --- Find OpenGL ---
-    find_package(OpenGL REQUIRED)
+    # --- Find OpenGL (only core component; GLU is not used) ---
+    find_package(OpenGL REQUIRED COMPONENTS OpenGL)
 
     # --- Find GLEW on Linux for modern GL ---
     if(USE_MODERN_GL AND NOT APPLE)
