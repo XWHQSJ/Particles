@@ -33,6 +33,11 @@ else()
 
     # --- Find OpenGL ---
     find_package(OpenGL REQUIRED)
+
+    # --- Find GLEW on Linux for modern GL ---
+    if(USE_MODERN_GL AND NOT APPLE)
+        find_package(GLEW REQUIRED)
+    endif()
 endif()
 
 # --- Common library ---
@@ -63,6 +68,10 @@ else()
     if(USE_MODERN_GL)
         target_sources(particle_common PRIVATE common/renderer_modern.cpp)
         target_compile_definitions(particle_common PUBLIC USE_MODERN_GL=1)
+        if(NOT APPLE)
+            target_link_libraries(particle_common PUBLIC GLEW::GLEW)
+            target_compile_definitions(particle_common PUBLIC USE_GLEW=1)
+        endif()
     endif()
 endif()
 

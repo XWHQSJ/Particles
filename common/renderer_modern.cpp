@@ -8,6 +8,8 @@
 #include <GLES3/gl3.h>
 #elif defined(__APPLE__)
 #include <OpenGL/gl3.h>
+#elif defined(USE_GLEW)
+#include <GL/glew.h>
 #else
 #include <GL/gl.h>
 #endif
@@ -113,6 +115,15 @@ bool ModernRenderer::load_shader_file(const char* path, char* buf,
 }
 
 bool ModernRenderer::init(const char* vert_path, const char* frag_path) {
+#ifdef USE_GLEW
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        fprintf(stderr, "GLEW init failed: %s\n",
+                reinterpret_cast<const char*>(glewGetErrorString(err)));
+        return false;
+    }
+#endif
+
     char vert_src[4096];
     char frag_src[4096];
 
