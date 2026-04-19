@@ -32,7 +32,11 @@ else()
     FetchContent_MakeAvailable(glfw)
 
     # --- Find OpenGL ---
-    find_package(OpenGL REQUIRED)
+    find_package(OpenGL REQUIRED COMPONENTS OpenGL)
+    if(NOT APPLE)
+        # GLU is separate on Linux — needed for gluPerspective in legacy path
+        find_package(OpenGL REQUIRED COMPONENTS OpenGL GLU)
+    endif()
 
     # --- Find GLEW on Linux for modern GL ---
     if(USE_MODERN_GL AND NOT APPLE)
@@ -55,6 +59,10 @@ if(EMSCRIPTEN)
     target_compile_definitions(particle_common PUBLIC USE_MODERN_GL=1)
 else()
     target_link_libraries(particle_common PUBLIC glfw OpenGL::GL)
+
+    if(NOT APPLE AND TARGET OpenGL::GLU)
+        target_link_libraries(particle_common PUBLIC OpenGL::GLU)
+    endif()
 
     if(APPLE)
         target_link_libraries(particle_common PUBLIC
