@@ -28,7 +28,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libglfw3-dev libgl-dev libglu1-mesa-dev
+          sudo apt-get install -y libglfw3-dev libgl-dev libglew-dev \
+            libxkbcommon-dev libwayland-dev \
+            libxinerama-dev libxcursor-dev libxi-dev libxrandr-dev
 
       - name: Configure
         run: |
