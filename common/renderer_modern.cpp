@@ -244,7 +244,9 @@ void ModernRenderer::render(const ParticleSystem& sys, GLuint texture_id,
                  static_cast<GLsizeiptr>(verts.size() * sizeof(ParticleVertex)),
                  verts.data(), GL_DYNAMIC_DRAW);
 
+#ifndef __EMSCRIPTEN__
     glEnable(GL_PROGRAM_POINT_SIZE);
+#endif
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
