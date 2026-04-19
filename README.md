@@ -13,19 +13,55 @@ A collection of OpenGL particle system demos inspired by [NeHe's classic OpenGL 
 
 All 11 demos run in the browser via Emscripten/WebAssembly (WebGL 2).
 
-| Demo | Description | Link |
-|------|-------------|------|
-| particles | Base NeHe-style particle system | [Try it](https://xwhqsj.github.io/Particles/particles/) |
-| butterfly | Symmetric paired systems with diagonal gravity | [Try it](https://xwhqsj.github.io/Particles/butterfly/) |
-| starCross | Two perpendicular crossing streams | [Try it](https://xwhqsj.github.io/Particles/starCross/) |
-| stars | 7 preset particle systems at different positions | [Try it](https://xwhqsj.github.io/Particles/stars/) |
-| torchLight | Flame / torch upward effect | [Try it](https://xwhqsj.github.io/Particles/torchLight/) |
-| X-Men | Diagonal burst particle arrays | [Try it](https://xwhqsj.github.io/Particles/X-Men/) |
-| fire | Upward flame with orange-red palette, rapid fade | [Try it](https://xwhqsj.github.io/Particles/fire/) |
-| fountain | Circular spawn via sin/cos, high initial Y, strong gravity | [Try it](https://xwhqsj.github.io/Particles/fountain/) |
-| snow | Gentle snowfall with drift, ground collision | [Try it](https://xwhqsj.github.io/Particles/snow/) |
-| galaxy | Parametric spiral arms with tangential velocity | [Try it](https://xwhqsj.github.io/Particles/galaxy/) |
-| explosion | Radial burst, zero gravity, rapid fade | [Try it](https://xwhqsj.github.io/Particles/explosion/) |
+**Live demos**: [xwhqsj.github.io/Particles](https://xwhqsj.github.io/Particles/) (deployed via gh-pages CI on push to master)
+
+| Demo | Description |
+|------|-------------|
+| particles | Base NeHe-style particle system |
+| butterfly | Symmetric paired systems with diagonal gravity |
+| starCross | Two perpendicular crossing streams |
+| stars | 7 preset particle systems at different positions |
+| torchLight | Flame / torch upward effect |
+| X-Men | Diagonal burst particle arrays |
+| fire | Upward flame with orange-red palette, rapid fade |
+| fountain | Circular spawn via sin/cos, high initial Y, strong gravity |
+| snow | Gentle snowfall with drift, ground collision |
+| galaxy | Parametric spiral arms with tangential velocity |
+| explosion | Radial burst, zero gravity, rapid fade |
+
+## Gallery
+
+### Original Demos (NeHe-derived)
+
+<table>
+<tr>
+  <td align="center"><img src="pictures/particles.png" width="240"/><br><b>Particles</b></td>
+  <td align="center"><img src="pictures/buftterfly.png" width="240"/><br><b>Butterfly</b></td>
+  <td align="center"><img src="pictures/starsCross.png" width="240"/><br><b>StarCross</b></td>
+</tr>
+<tr>
+  <td align="center"><img src="pictures/Stars.png" width="240"/><br><b>Stars</b></td>
+  <td align="center"><img src="pictures/torch.png" width="240"/><br><b>TorchLight</b></td>
+  <td align="center"><img src="pictures/X-Men.png" width="240"/><br><b>X-Men</b></td>
+</tr>
+</table>
+
+### New Demos (added in v2)
+
+<table>
+<tr>
+  <td align="center"><img src="docs/images/fire.png" width="240"/><br><b>Fire</b></td>
+  <td align="center"><img src="docs/images/fountain.png" width="240"/><br><b>Fountain</b></td>
+  <td align="center"><img src="docs/images/snow.png" width="240"/><br><b>Snow</b></td>
+</tr>
+<tr>
+  <td align="center"><img src="docs/images/galaxy.png" width="240"/><br><b>Galaxy</b></td>
+  <td align="center"><img src="docs/images/explosion.png" width="240"/><br><b>Explosion</b></td>
+  <td></td>
+</tr>
+</table>
+
+*New demo snapshots rendered by `qa/render_demo_snapshots.cpp` -- a standalone software particle renderer (no GL context needed).*
 
 ## Project Structure
 
@@ -77,16 +113,7 @@ Particles/
 
 ## Screenshots
 
-Screenshots of the original effects are in `pictures/`:
-
-| Effect | Files |
-|--------|-------|
-| Particles | `particles.png` |
-| Butterfly | `buftterfly.png` ... `buftterfly (6).png` |
-| Stars Cross | `starsCross.png` ... `starsCross (3).png` |
-| Stars | `Stars.png` ... `Stars (3).png` |
-| Torch | `torch.png` ... `torch (5).png` |
-| X-Men | `X-Men.png` ... `X-Men (3).png` |
+See the [Gallery](#gallery) above for visual previews of all 11 demos.
 
 ## Build
 
