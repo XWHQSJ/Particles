@@ -1,0 +1,57 @@
+# Build output
+Debug/
+Release/
+x64/
+x86/
+obj/
+bin/
+ipch/
+out/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.sdf
+*.opensdf
+*.ncb
+*.opt
+*.VC.db
+*.VC.opendb
+*.aps
+*.sln.ide/
+UpgradeLog.htm
+
+# Compiled files
+*.exe
+*.dll
+*.lib
+*.obj
+*.o
+*.pdb
+*.ilk
+*.idb
+*.exp
+*.pch
+*.ipch
+
+# Linker output
+*.map
+
+# Precompiled headers
+*.gch
+
+# Backup files
+*.bak
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Build log
+*.plg
+*.log
