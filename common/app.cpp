@@ -3,10 +3,6 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <GLES3/gl3.h>
-#elif defined(__APPLE__)
-#include <OpenGL/glu.h>
-#else
-#include <GL/glu.h>
 #endif
 
 #include <GLFW/glfw3.h>
@@ -39,7 +35,7 @@ App::~App() {
     g_app = nullptr;
 }
 
-// Build a simple perspective matrix (used when gluPerspective is unavailable)
+// Build a simple perspective matrix (replaces gluPerspective to avoid GLU dep)
 static void build_perspective(float* m, float fov_deg, float aspect,
                               float near_p, float far_p) {
     memset(m, 0, 16 * sizeof(float));
@@ -118,7 +114,11 @@ void App::tick() {
 #ifndef __EMSCRIPTEN__
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, static_cast<double>(w) / h, 0.1, 200.0);
+    {
+        float proj[16];
+        build_perspective(proj, 45.0f, static_cast<float>(w) / h, 0.1f, 200.0f);
+        glLoadMatrixf(proj);
+    }
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 #endif

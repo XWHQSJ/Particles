@@ -56,10 +56,6 @@ if(EMSCRIPTEN)
 else()
     target_link_libraries(particle_common PUBLIC glfw OpenGL::GL)
 
-    if(NOT APPLE AND OPENGL_glu_LIBRARY)
-        target_link_libraries(particle_common PUBLIC ${OPENGL_glu_LIBRARY})
-    endif()
-
     if(APPLE)
         target_link_libraries(particle_common PUBLIC
             "-framework Cocoa"
