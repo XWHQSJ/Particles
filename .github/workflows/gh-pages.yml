@@ -1,0 +1,220 @@
+name: Deploy Demos to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.51
+
+      - name: Build WASM demos
+        run: |
+          emcmake cmake -B build-web -S . -DUSE_MODERN_GL=ON
+          emmake make -C build-web -j$(nproc)
+
+      - name: Assemble web directory
+        run: |
+          mkdir -p web
+          for demo in particles butterfly starCross stars torchLight X-Men fire fountain snow galaxy explosion; do
+            mkdir -p "web/${demo}"
+            cp "build-web/demos/${demo}.html" "web/${demo}/index.html"
+            cp "build-web/demos/${demo}.js"   "web/${demo}/"
+            cp "build-web/demos/${demo}.wasm" "web/${demo}/"
+            # Data file may be named differently
+            if [ -f "build-web/demos/${demo}.data" ]; then
+              cp "build-web/demos/${demo}.data" "web/${demo}/"
+            fi
+          done
+
+      - name: Generate index.html
+        run: |
+          cat > web/index.html << 'HTMLEOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Particles — WebGL Demos</title>
+          <style>
+            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              background: #0a0a0f;
+              color: #e0e0e0;
+              min-height: 100vh;
+              padding: 2rem;
+            }
+            header {
+              text-align: center;
+              margin-bottom: 3rem;
+            }
+            header h1 {
+              font-size: clamp(2rem, 5vw, 3.5rem);
+              background: linear-gradient(135deg, #ff6b6b, #ffa500, #ffe066, #69db7c, #74c0fc, #b197fc);
+              -webkit-background-clip: text;
+              background-clip: text;
+              color: transparent;
+              margin-bottom: 0.5rem;
+            }
+            header p {
+              color: #888;
+              font-size: 1.1rem;
+            }
+            header p a { color: #74c0fc; text-decoration: none; }
+            header p a:hover { text-decoration: underline; }
+            .grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+              gap: 1.25rem;
+              max-width: 1200px;
+              margin: 0 auto;
+            }
+            .card {
+              background: #16161d;
+              border: 1px solid #2a2a35;
+              border-radius: 12px;
+              padding: 1.5rem;
+              transition: border-color 0.2s, transform 0.2s;
+            }
+            .card:hover {
+              border-color: #74c0fc;
+              transform: translateY(-2px);
+            }
+            .card h2 {
+              font-size: 1.25rem;
+              margin-bottom: 0.5rem;
+              color: #fff;
+            }
+            .card p {
+              font-size: 0.9rem;
+              color: #999;
+              margin-bottom: 1rem;
+              line-height: 1.4;
+            }
+            .card a {
+              display: inline-block;
+              padding: 0.5rem 1.25rem;
+              background: #74c0fc;
+              color: #0a0a0f;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: 600;
+              font-size: 0.9rem;
+              transition: background 0.2s;
+            }
+            .card a:hover { background: #4dabf7; }
+            footer {
+              text-align: center;
+              margin-top: 3rem;
+              color: #555;
+              font-size: 0.85rem;
+            }
+            footer a { color: #74c0fc; text-decoration: none; }
+          </style>
+          </head>
+          <body>
+          <header>
+            <h1>Particles</h1>
+            <p>OpenGL particle system demos compiled to WebAssembly.
+               <a href="https://github.com/XWHQSJ/Particles">GitHub</a></p>
+          </header>
+          <main>
+          <div class="grid">
+            <div class="card">
+              <h2>particles</h2>
+              <p>Base NeHe-style particle system — the classic rainbow burst.</p>
+              <a href="particles/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>butterfly</h2>
+              <p>Symmetric paired systems with diagonal gravity.</p>
+              <a href="butterfly/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>starCross</h2>
+              <p>Two perpendicular crossing particle streams.</p>
+              <a href="starCross/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>stars</h2>
+              <p>Seven preset particle systems at different positions.</p>
+              <a href="stars/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>torchLight</h2>
+              <p>Flame / torch upward effect with warm tones.</p>
+              <a href="torchLight/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>X-Men</h2>
+              <p>Diagonal burst particle arrays — dramatic spread.</p>
+              <a href="X-Men/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>fire</h2>
+              <p>Upward flame with orange-red palette, rapid fade.</p>
+              <a href="fire/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>fountain</h2>
+              <p>Circular spawn via sin/cos, high initial Y, strong gravity.</p>
+              <a href="fountain/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>snow</h2>
+              <p>Gentle snowfall with drift and ground collision.</p>
+              <a href="snow/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>galaxy</h2>
+              <p>Parametric spiral arms with tangential velocity.</p>
+              <a href="galaxy/">Try it</a>
+            </div>
+            <div class="card">
+              <h2>explosion</h2>
+              <p>Radial burst, zero gravity, rapid fade.</p>
+              <a href="explosion/">Try it</a>
+            </div>
+          </div>
+          </main>
+          <footer>
+            <p>Inspired by <a href="https://nehe.gamedev.net">NeHe's OpenGL Tutorials</a>.
+               Original effects by XWHQSJ.</p>
+          </footer>
+          </body>
+          </html>
+          HTMLEOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-22.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
