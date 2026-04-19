@@ -4,13 +4,47 @@
 #include <cmath>
 #include <vector>
 
-#ifdef __APPLE__
+#ifdef __EMSCRIPTEN__
+#include <GLES3/gl3.h>
+#elif defined(__APPLE__)
 #include <OpenGL/gl3.h>
 #else
 #include <GL/gl.h>
 #endif
 
 // Embedded shaders as fallback
+// Use GLSL ES 300 for Emscripten, GLSL 330 core for desktop
+#ifdef __EMSCRIPTEN__
+static const char* kDefaultVertexShader = R"(#version 300 es
+precision highp float;
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec4 aColor;
+layout(location = 2) in float aSize;
+
+uniform mat4 uMVP;
+
+out vec4 vColor;
+
+void main() {
+    gl_Position = uMVP * vec4(aPos, 1.0);
+    gl_PointSize = aSize;
+    vColor = aColor;
+}
+)";
+
+static const char* kDefaultFragmentShader = R"(#version 300 es
+precision highp float;
+in vec4 vColor;
+out vec4 FragColor;
+
+uniform sampler2D uTexture;
+
+void main() {
+    vec4 texColor = texture(uTexture, gl_PointCoord);
+    FragColor = texColor * vColor;
+}
+)";
+#else
 static const char* kDefaultVertexShader = R"(
 #version 330 core
 layout(location = 0) in vec3 aPos;
@@ -40,6 +74,7 @@ void main() {
     FragColor = texColor * vColor;
 }
 )";
+#endif
 
 struct ParticleVertex {
     float x, y, z;

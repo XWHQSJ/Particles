@@ -1,6 +1,8 @@
 #pragma once
 
-#ifdef __APPLE__
+#ifdef __EMSCRIPTEN__
+#include <GLES3/gl3.h>
+#elif defined(__APPLE__)
 #ifndef GL_SILENCE_DEPRECATION
 #define GL_SILENCE_DEPRECATION
 #endif

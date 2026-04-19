@@ -8,21 +8,32 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(USE_MODERN_GL "Enable modern OpenGL 3.3 core renderer" ON)
 option(BUILD_TESTS "Build physics unit tests" ON)
 
-# --- GLFW via FetchContent ---
-include(FetchContent)
-FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG        3.4
-)
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(glfw)
+# --- Emscripten detection ---
+if(EMSCRIPTEN)
+    message(STATUS "Building for Emscripten/WebAssembly")
+    set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    # GLFW is provided by Emscripten
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s USE_GLFW=3 -s FULL_ES3=1")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --preload-file ${CMAKE_SOURCE_DIR}/allParticles/Data@allParticles/Data")
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+else()
+    # --- GLFW via FetchContent (native builds only) ---
+    include(FetchContent)
+    FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG        3.4
+    )
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(glfw)
 
-# --- Find OpenGL ---
-find_package(OpenGL REQUIRED)
+    # --- Find OpenGL ---
+    find_package(OpenGL REQUIRED)
+endif()
 
 # --- Common library ---
 add_library(particle_common STATIC
@@ -31,20 +42,28 @@ add_library(particle_common STATIC
     common/texture.cpp
 )
 target_include_directories(particle_common PUBLIC common)
-target_link_libraries(particle_common PUBLIC glfw OpenGL::GL)
 
-if(APPLE)
-    target_link_libraries(particle_common PUBLIC
-        "-framework Cocoa"
-        "-framework IOKit"
-        "-framework CoreVideo"
-    )
-    target_compile_definitions(particle_common PUBLIC GL_SILENCE_DEPRECATION)
-endif()
-
-if(USE_MODERN_GL)
+if(EMSCRIPTEN)
+    target_compile_options(particle_common PUBLIC -s USE_GLFW=3)
+    # Modern renderer is always included for Emscripten
     target_sources(particle_common PRIVATE common/renderer_modern.cpp)
     target_compile_definitions(particle_common PUBLIC USE_MODERN_GL=1)
+else()
+    target_link_libraries(particle_common PUBLIC glfw OpenGL::GL)
+
+    if(APPLE)
+        target_link_libraries(particle_common PUBLIC
+            "-framework Cocoa"
+            "-framework IOKit"
+            "-framework CoreVideo"
+        )
+        target_compile_definitions(particle_common PUBLIC GL_SILENCE_DEPRECATION)
+    endif()
+
+    if(USE_MODERN_GL)
+        target_sources(particle_common PRIVATE common/renderer_modern.cpp)
+        target_compile_definitions(particle_common PUBLIC USE_MODERN_GL=1)
+    endif()
 endif()
 
 # --- Demo executables ---
