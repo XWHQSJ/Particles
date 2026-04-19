@@ -90,6 +90,15 @@ foreach(demo ${DEMOS})
     )
 endforeach()
 
+# --- Snapshot renderer (no GL, pure software) ---
+if(NOT EMSCRIPTEN)
+    add_executable(render_demo_snapshots qa/render_demo_snapshots.cpp common/particle.cpp)
+    target_include_directories(render_demo_snapshots PRIVATE common)
+    set_target_properties(render_demo_snapshots PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qa"
+    )
+endif()
+
 # --- Tests ---
 if(BUILD_TESTS)
     enable_testing()
