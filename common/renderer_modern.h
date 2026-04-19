@@ -7,6 +7,8 @@
 #define GL_SILENCE_DEPRECATION
 #endif
 #include <OpenGL/gl3.h>
+#elif defined(USE_GLEW)
+#include <GL/glew.h>
 #else
 #include <GL/gl.h>
 #endif

@@ -4,16 +4,6 @@
 #include <cmath>
 #include <vector>
 
-#ifdef __EMSCRIPTEN__
-#include <GLES3/gl3.h>
-#elif defined(__APPLE__)
-#include <OpenGL/gl3.h>
-#elif defined(USE_GLEW)
-#include <GL/glew.h>
-#else
-#include <GL/gl.h>
-#endif
-
 // Embedded shaders as fallback
 // Use GLSL ES 300 for Emscripten, GLSL 330 core for desktop
 #ifdef __EMSCRIPTEN__
