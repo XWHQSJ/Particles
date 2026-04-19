@@ -1,0 +1,49 @@
+name: CI — Sanitizers
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  sanitizer:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-14]
+        sanitizer: [asan, ubsan]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglfw3-dev libgl-dev
+
+      - name: Set sanitizer flags
+        id: flags
+        run: |
+          if [ "${{ matrix.sanitizer }}" = "asan" ]; then
+            echo "san_flags=-fsanitize=address -fno-omit-frame-pointer" >> "$GITHUB_OUTPUT"
+          else
+            echo "san_flags=-fsanitize=undefined -fno-omit-frame-pointer" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure
+        run: |
+          cmake -B build -S . \
+            -DBUILD_TESTS=ON \
+            -DUSE_MODERN_GL=OFF \
+            -DCMAKE_CXX_FLAGS="${{ steps.flags.outputs.san_flags }}" \
+            -DCMAKE_EXE_LINKER_FLAGS="${{ steps.flags.outputs.san_flags }}"
+
+      - name: Build tests
+        run: cmake --build build --target physics_test -j
+
+      - name: Run tests under sanitizer
+        run: ctest --test-dir build --output-on-failure
